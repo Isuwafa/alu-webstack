@@ -1,28 +1,28 @@
 #!/usr/bin/env bash
-# Script that displays information about subdomains
-# Usage: ./0-world_wide_web domain [subdomain]
+# Script that displays information about subdomains of a given domain
 
-# Function to display subdomain info
-check_subdomain() {
-    local domain=$1
-    local subdomain=$2
+get_subdomain_info() {
+    local domain="$1"
+    local subdomain="$2"
+    local record_type
+    local destination
 
     # shellcheck disable=SC2086
-    info=$(dig $subdomain.$domain | awk '/ANSWER SECTION:/{found=1; next} found && NF{print $4, $5; exit}')
+    record_type=$(dig +noall +answer $subdomain.$domain | awk '{print $4}')
+    # shellcheck disable=SC2086
+    destination=$(dig +noall +answer $subdomain.$domain | awk '{print $5}')
 
-    record_type=$(echo $info | awk '{print $1}')
-    destination=$(echo $info | awk '{print $2}')
-
-    echo "The subdomain $subdomain is a $record_type record and points to $destination"
+    echo "The subdomain ${subdomain} is a ${record_type} record and points to ${destination}"
 }
 
-domain=$1
-subdomain=$2
+domain="$1"
+subdomain="$2"
 
 if [ -z "$subdomain" ]; then
-    for sub in www lb-01 web-01 web-02; do
-        check_subdomain "$domain" "$sub"
-    done
+    get_subdomain_info "$domain" "www"
+    get_subdomain_info "$domain" "lb-01"
+    get_subdomain_info "$domain" "web-01"
+    get_subdomain_info "$domain" "web-02"
 else
-    check_subdomain "$domain" "$subdomain"
+    get_subdomain_info "$domain" "$subdomain"
 fi
